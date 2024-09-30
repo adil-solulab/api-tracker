@@ -1,0 +1,52 @@
+<script src="vendor/libs/jquery/jquery.js"></script>
+<script src="vendor/libs/popper/popper.js"></script>
+<script src="vendor/js/bootstrap.js"></script>
+<script src="vendor/libs/node-waves/node-waves.js"></script>
+<script src="vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+<script src="vendor/js/menu.js"></script>
+
+<!-- endbuild -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+
+<!-- Vendors JS -->
+<script src="vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
+<script src="vendor/libs/select2/select2.js"></script>
+<script src="vendor/libs/@form-validation/umd/bundle/popular.min.js"></script>
+<script src="vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js"></script>
+<script src="vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js"></script>
+<script src="vendor/libs/moment/moment.js"></script>
+<script src="vendor/libs/toastr/toastr.js"></script>
+<script src="vendor/libs/apex-charts/apexcharts.js"></script>
+<script src="js/ui-popover.js"></script>
+<script src="vendor/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+<script src="vendor/libs/autosize/autosize.js"></script>
+
+<!-- Main JS -->
+<script src="js/main.js"></script>
+
+<!-- Page JS -->
+<script src="js/ui-toasts.js"></script>
+<script src="js/core/check-session.js"></script>
+<script src="js/core/constant.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<script>
+	const Logout = async () => {
+		try {
+			const request = axiosConfig(constant.URLS.LOGOUT, 'POST', {})
+			const logout = await MakeAPICall(request)
+			if (logout) {
+				await MakeAPICall({
+					method: 'POST',
+					url: '/destroy-session',
+				})
+				storage.clear()
+			}
+		} catch (error) {
+			ToastMsg(error, 'Error')
+		} finally {
+			window.location.href = '/'
+		}
+	}
+</script>

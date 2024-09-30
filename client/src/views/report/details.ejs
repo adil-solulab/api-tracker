@@ -1,0 +1,77 @@
+<div style="max-width: 100%;" class="content-wrapper">
+	<!-- Content -->
+
+	<div style="padding-left: 0; padding-right: 0; max-width: 98%;" class="container-xxl flex-grow-1 container-p-y">
+		<!-- Users List Table -->
+		<div class="card">
+			<h5 class="card-header">API Report Details</h5>
+			<div class="container-xxl flex-grow-1 container-p-y">
+				<div class="row gy-4">
+					<div class="col-lg-12">
+						<div class="card h-100">
+							<div class="card-header d-flex align-items-center justify-content-between">
+								<div class="card-title mb-0">
+									<h5 class="m-0 me-2 mb-1">Destination Report</h5>
+								</div>
+								
+								
+							</div>
+							<div class="card-body">
+								<div id="DestinationChart"></div>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-12">
+						<div class="card h-100">
+							<div class="card-header d-flex align-items-center justify-content-between">
+								<div class="card-title mb-0">
+									<h5 class="m-0 me-2 mb-1">IP Report</h5>
+								</div>
+								
+								
+							</div>
+							<div class="card-body">
+								<div id="IpReportChart"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			
+			<hr class="mt-0" />
+			<div class="card-datatable table-responsive">
+				<table id="Datatable" class="datatables-users table">
+					<thead class="table-light">
+						<tr class="text-black">
+							<th>Code</th>							
+							<th>cred code</th>
+							<th>ref url</th>
+							<th>search id</th>
+							<th>ip</th>
+							<th>org</th>
+							<th>des</th>
+							<th>class</th>
+							<th>currency</th>
+							<th>adt</th>
+							<th>chd</th>
+							<th>inf</th>
+							<th>date</th>
+						</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<!-- / Content -->
+
+	<!-- Footer -->
+	<%- include('../partials/footer') %>
+	<!-- / Footer -->
+
+	<div class="content-backdrop fade"></div>
+</div>
+<script src="js/reports/chart.js"></script>
+<script src="js/core/datatable-helper.js"></script>
+<script src="js/reports/details.js"></script>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html
+	lang="en"
+	class="light-style layout-navbar-fixed layout-menu-fixed layout-compact"
+	dir="ltr"
+	data-theme="theme-default"
+	data-assets-path=""
+	data-template="vertical-menu-template-no-customizer"
+>
+	<head>
+		<%- include('./partials/style')%>
+	</head>
+
+	<body>
+		<div class="layout-wrapper layout-content-navbar">
+			<div class="layout-container">
+				<!-- <%- include('./partials/sidebar') %> -->
+				<div style="padding-left: 0;" class="layout-page"><%- body%></div>
+			</div>
+			<!-- Overlay -->
+			<div class="layout-overlay layout-menu-toggle"></div>
+
+			<!-- Drag Target Area To SlideIn Menu On Small Screens -->
+			<div class="drag-target"></div>
+		</div>
+		<%- include('./partials/scripts')%> <% const {active: _active} = data %>
+		<script>
+			const active = `<%=_active%>`
+		</script>
+		<script src="js/sidebar/permission.js"></script>
+
+		<%- script %>
+	</body>
+</html>
