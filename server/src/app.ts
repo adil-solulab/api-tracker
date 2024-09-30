@@ -10,6 +10,8 @@ import { AppRoutes } from './app.routes'
 import { maintenanceMode } from '@middlewares/maintenance-mode'
 import { Wrap } from '@core/utils'
 import Paginator from '@helpers/pagination.helper'
+import cron from 'node-cron'
+import { DatabaseHelper } from '@helpers/database-cleaner.helper'
 
 export class Application {
 	private app: express.Application
@@ -22,6 +24,7 @@ export class Application {
 		this.connectDatabase()
 		this.registerResponders()
 		this.registerRoutes()
+		this.cron()
 	}
 
 	// Returns Express App
@@ -128,6 +131,13 @@ export class Application {
 		})
 		await database.connect()
 		Global.App.Database = database
+	}
+
+	private async cron() {
+		cron.schedule('* * * * *', async () => {
+			Logger.info('Cron service started.')
+			await DatabaseHelper.monitorAndCleanup()
+		})
 	}
 
 	// Do things after the server starts

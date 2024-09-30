@@ -42,7 +42,7 @@ app.use(express.static(__dirname + '/assets'))
 
 /** Start server */
 app.listen(config.port || 4000, () => {
-	Logger.info(`Server Listing At ${config.host}`)
+	Logger.info(`UI service running at ${config.host}`)
 	routers(app)
 })
 

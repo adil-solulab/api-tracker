@@ -1,35 +1,43 @@
-const config = require('../config')
-const { GeneratePDF } = require('./pdf-creator.helper')
-const { MongoClient } = require('mongodb')
+import { MongoClient } from 'mongodb'
+import { ReportService } from './auto-generate-pdf.helper'
 
+interface DataObj {
+	search: { value: string }
+	start: number
+	length: number
+	companyCode?: string
+	startDate?: string
+	endDate?: string
+	columns: Array<{ data: string }>
+	order: Array<{ column: number; dir: string }>
+	draw: number
+}
 
-
-class DatabaseService {
-	private THRESHOLD_PERCENTAGE = App.Config.THRESHOLD_PERCENTAGE
-	private URL = App.Config.SECONDARY_DB_URL
-    private COLLECTION_NAME='reports'
+class DatabaseCleaner {
+	private readonly THRESHOLD_PERCENTAGE: number
+	private readonly URL: string
+	private readonly COLLECTION_NAME = 'reports'
 
 	constructor() {
-		this.URL = URL
-		this.THRESHOLD_PERCENTAGE = this.THRESHOLD_PERCENTAGE
+		this.URL = App.Config.SECONDARY_DB
+		this.THRESHOLD_PERCENTAGE = App.Config.THRESHOLD_PERCENTAGE
 	}
 
-	async connectToMongo() {
+	private async connectToMongo(): Promise<MongoClient> {
 		const client = new MongoClient(this.URL)
 		try {
 			await client.connect()
 			Logger.info('Secondary Database Connected Successfully.')
 			return client
 		} catch (error) {
-			Logger.error(`Error Connecting to Secondary Database: ${error?.message}`)
+			Logger.error(`Error Connecting to Secondary Database: ${error.message}`)
 			throw error
 		}
 	}
 
-	async monitorAndCleanup() {
+	public async monitorAndCleanup(): Promise<void> {
 		try {
 			const stats = await App.Models.Tracker.collection.stats({ scale: 1024 })
-			const totalStorage = stats.storageSize
 			const dataSize = stats.size
 			const storageUsed = Math.round((dataSize / 460800) * 100)
 
@@ -38,46 +46,51 @@ class DatabaseService {
 
 			if (storageUsed >= this.THRESHOLD_PERCENTAGE) {
 				Logger.info('Database storage is full | Performing Delete operation')
-				await this.moveDatabaseDocuments()
 			}
+			await this.moveDatabaseDocuments()
 		} catch (error) {
-			Logger.error(error)
+			Logger.error(`Error in monitorAndCleanup: ${error}`)
 		}
 	}
 
-	async moveDatabaseDocuments() {
+	private async moveDatabaseDocuments(): Promise<void> {
 		const client = await this.connectToMongo()
 		try {
 			const db = client.db()
-			const data = await GeneratePDF()
-			const result = await db.collection(this.COLLECTION_NAME).insertMany(data)
+			const data = await ReportService.GeneratePDF()
 
-			if (result) {
-				await App.Models.Tracker.deleteMany()
+			if (data.length > 0) {
+				const result = await db.collection(this.COLLECTION_NAME).insertMany(data)
+
+				if (result) {
+					// await App.Models.Tracker.deleteMany()
+					Logger.info('Old Tracker data moved and deleted successfully.')
+				}
 			}
 		} catch (error) {
-			Logger.error(error)
+			Logger.error(`Error moving database documents: ${error}`)
 		} finally {
 			await client.close()
 		}
 	}
 
-	async fetchArchivedData(dataObj) {
+	public async fetchArchivedData(dataObj: DataObj): Promise<any> {
 		const client = await this.connectToMongo()
 		try {
-			let { search, start, length, companyCode, startDate, endDate } = dataObj
-			const orderBy = dataObj.columns[dataObj.order[0].column].data
-			const orderByData = {}
-			orderByData[orderBy] = dataObj.order[0].dir === 'asc' ? 1 : -1
-			search = search.value !== '' ? search.value : false
+			const { search, start, length, companyCode, startDate, endDate, columns, order, draw } =
+				dataObj
+			const orderBy = columns[order[0].column].data
+			const orderByData: { [key: string]: number } = {}
+			orderByData[orderBy] = order[0].dir === 'asc' ? 1 : -1
+			const searchTerm = search.value || false
 
 			const db = client.db()
 			const collection = db.collection(this.COLLECTION_NAME)
 
-			let query = []
+			const query: any[] = []
 
 			if (startDate && endDate) {
-				query.unshift({
+				query.push({
 					$match: {
 						$or: [{ Date: startDate }, { Date: endDate }],
 					},
@@ -85,7 +98,7 @@ class DatabaseService {
 			}
 
 			if (companyCode) {
-				query.unshift({
+				query.push({
 					$match: { Company_Code: companyCode },
 				})
 			}
@@ -109,21 +122,19 @@ class DatabaseService {
 						'Hits/sec': 1,
 						Date: '$_id.date',
 					},
+				},
+				{ $sort: orderByData },
+				{
+					$facet: {
+						list: [{ $skip: Number(start) || 0 }, { $limit: Number(length) || 10 }],
+						totalRecords: [{ $count: 'count' }],
+					},
 				}
 			)
 
-			query.push({ $sort: orderByData })
-
-			query.push({
-				$facet: {
-					list: [{ $skip: Number(start) || 0 }, { $limit: Number(length) || 10 }],
-					totalRecords: [{ $count: 'count' }],
-				},
-			})
-
 			const response = await collection.aggregate(query).toArray()
 			const responseData = {
-				draw: dataObj.draw,
+				draw,
 				recordsTotal: response[0]?.totalRecords[0]?.count || 0,
 				recordsFiltered: response[0]?.totalRecords[0]?.count || 0,
 				data: response[0]?.list || [],
@@ -131,10 +142,12 @@ class DatabaseService {
 
 			return responseData
 		} catch (error) {
-			Logger.error(error)
+			Logger.error(`Error fetching archived data: ${error}`)
 			return null
 		} finally {
 			await client.close()
 		}
 	}
 }
+
+export const DatabaseHelper = new DatabaseCleaner()
